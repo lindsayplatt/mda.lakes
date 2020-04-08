@@ -49,7 +49,6 @@ area_light_threshold = function(kd, light_incident, irr_thresh=c(0,2000), hypso,
 	
 	light_map = vol_light_map(kd, light_incident, irr_thresh, hypso$depths)
 	
-	
 	if(tolower(area_type) == "surface"){
 		depth_area_rel = surface_areas(hypso$depths, hypso$areas)
 	}else if(tolower(area_type) == "benthic"){
@@ -83,6 +82,9 @@ area_light_threshold = function(kd, light_incident, irr_thresh=c(0,2000), hypso,
 #'@export
 area_temp_threshold = function(wtr, wtr_thresh=c(0,25), hypso, area_type="surface"){
 	
+  # Match hypso depths to water temperature profile depths
+  matched_depths = get.offsets(wtr)
+  matched_areas  = approx(hypso$depths, hypso$areas, xout=matched_depths)$y
 	
   wtr = drop.datetime(wtr)
 	
@@ -95,9 +97,9 @@ area_temp_threshold = function(wtr, wtr_thresh=c(0,25), hypso, area_type="surfac
 	}
 	
 	if(tolower(area_type) == "surface"){
-		depth_area_rel = surface_areas(hypso$depths, hypso$areas)
+		depth_area_rel = surface_areas(matched_depths, matched_areas)
 	}else if(tolower(area_type) == "benthic"){
-		depth_area_rel = benthic_areas(hypso$depths, hypso$areas)
+		depth_area_rel = benthic_areas(matched_depths, matched_areas)
 	}else{
 		stop("Unrecognized area_type, must be 'surface' or 'benthic'")
 	}
@@ -122,6 +124,10 @@ area_temp_threshold = function(wtr, wtr_thresh=c(0,25), hypso, area_type="surfac
 #'@export
 area_light_temp_threshold = function(wtr, kd, light_incident, irr_thresh=c(0,2000), wtr_thresh=c(0,25), hypso, area_type="surface"){
 	
+  # Match hypso depths to water temperature profile depths
+  matched_depths = get.offsets(wtr)
+  matched_areas  = approx(hypso$depths, hypso$areas, xout=matched_depths)$y
+  
 	wtr = drop.datetime(wtr)
 	
 	map = wtr >= wtr_thresh[1] & wtr <= wtr_thresh[2]
@@ -131,16 +137,15 @@ area_light_temp_threshold = function(wtr, kd, light_incident, irr_thresh=c(0,200
 		vol_map[,i] = map[,i] & map[,i+1]
 	}
 	
-	light_map = vol_light_map(kd, light_incident, irr_thresh, hypso$depths)
+	light_map = vol_light_map(kd, light_incident, irr_thresh, matched_depths)
 	
 	##these should theoretically be the exact same size/shape
 	both_map = light_map & vol_map  #only where both apply
 	
-	
 	if(tolower(area_type) == "surface"){
-		depth_area_rel = surface_areas(hypso$depths, hypso$areas)
+		depth_area_rel = surface_areas(matched_depths, matched_areas)
 	}else if(tolower(area_type) == "benthic"){
-		depth_area_rel = benthic_areas(hypso$depths, hypso$areas)
+		depth_area_rel = benthic_areas(matched_depths, matched_areas)
 	}else{
 		stop("Unrecognized area_type, must be 'surface' or 'benthic'")
 	}
