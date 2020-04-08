@@ -53,7 +53,7 @@ opti_thermal_habitat = function(opt_wtr, io, kd, lat, lon, hypso, irr_thresh=c(0
 		wtr = new_wtr
 		
 		#note, the division by 24, want it in m^2*days (not hours)
-		light_alone = area_light_threshold(kd, io[,2], irr_thresh, hypso, area_type)/24
+		light_alone = area_light_threshold(kd, io[,1:2], irr_thresh, hypso, area_type)/24
 		temp_alone  = area_temp_threshold(wtr, wtr_thresh, hypso, area_type)/24
 		light_temp  = area_light_temp_threshold(wtr, kd, io[,2], irr_thresh, wtr_thresh, hypso, area_type)/24
 		

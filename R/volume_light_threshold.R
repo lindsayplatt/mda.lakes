@@ -49,11 +49,13 @@ area_light_threshold = function(kd, light_incident, irr_thresh=c(0,2000), hypso,
 	
   depth_area_rel <- calc_depth_area_rel(hypso, area_type)
   
-	light_map = vol_light_map(kd, light_incident, irr_thresh, hypso$depths)
+	# light_map = vol_light_map(kd, light_incident[[2]], irr_thresh, hypso$depths)
+	# 
+	# light_map_collapsed = apply(light_map, 2, sum, na.rm=TRUE)
+	# 
+	# average_area = sum(depth_area_rel * light_map_collapsed)
 	
-	light_map_collapsed = apply(light_map, 2, sum, na.rm=TRUE)
-	
-	average_area = sum(depth_area_rel * light_map_collapsed)
+	average_area <- calc_optical_habitat_area(kd, light_incident, irr_thresh, hypso$depths, depth_area_rel)
 	
 	return(average_area)
 }
@@ -157,6 +159,23 @@ vol_light_map = function(kd, light_incident, thresholds, depths){
 	}
 	
 	return(vol_light_map)
+}
+
+# New function to test this
+calc_optical_habitat_area <- function(kd, io, thresholds, depths, depth_area_rel) {
+  # gives same results, but takes much longer
+
+  light_profile <- expand.grid(datetime = io$datetime, d = depths) %>% 
+    left_join(io, by = "datetime") %>% 
+    mutate(irr_d = irr * exp(-1* kd * d)) %>% 
+    mutate(slice_within_threshold = irr_d >= thresholds[1] & irr_d <= thresholds[2]) %>%
+    group_by(datetime) %>% 
+    mutate(layer_within_threshold = slice_within_threshold & lead(slice_within_threshold)) %>% 
+    mutate(area = layer_within_threshold * depth_area_rel) %>% 
+    filter(!is.na(area))
+  
+  avg_area <- sum(light_profile$area)
+  return(avg_area)
 }
 
 
