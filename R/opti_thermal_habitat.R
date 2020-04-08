@@ -32,28 +32,28 @@ opti_thermal_habitat = function(opt_wtr, io, kd, lat, lon, hypso, irr_thresh=c(0
 	if(interp_hour){
 	  
 	  if(nrow(wtr) < 2) stop("Need to use at least 2 different water temperature values to interpolate between")
-	  
+
 	  io = create_irr_day_cycle(lat,lon, dates=io[[1]], irr_mean = io[[2]], by='min')
-	  
+
 		#I really hate that I have to do this, but I need to ensure it is UTC for the later approx stage
 		wtr[[1]] = as.POSIXct(format(wtr[[1]], '%Y-%m-%d'), tz='UTC')
-		
+
 		new_wtr = data.frame(datetime=io[[1]])
 		for(i in 2:ncol(wtr)){
 			colname = names(wtr)[i]
-			
+
 			#THere may not be enough non NA values for us to run approx, check
 			if(sum(!is.na(wtr[, colname])) < 2){
 				new_wtr[[colname]] = rep(NA, nrow(new_wtr))
 			}else{
 				new_wtr[[colname]] = approx(wtr[[1]], wtr[[colname]], xout=io[[1]])$y
 			}
-			
+
 		}
 		wtr = new_wtr
 		
 		#note, the division by 24, want it in m^2*days (not hours)
-		light_alone = area_light_threshold(kd, io[,1:2], irr_thresh, hypso, area_type)/24
+		light_alone = area_light_threshold(kd, io[,2], irr_thresh, hypso, area_type)/24
 		temp_alone  = area_temp_threshold(wtr, wtr_thresh, hypso, area_type)/24
 		light_temp  = area_light_temp_threshold(wtr, kd, io[,2], irr_thresh, wtr_thresh, hypso, area_type)/24
 		
