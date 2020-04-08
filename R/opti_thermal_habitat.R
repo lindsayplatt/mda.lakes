@@ -34,7 +34,7 @@ opti_thermal_habitat = function(opt_wtr, io, kd, lat, lon, hypso, irr_thresh=c(0
 	  if(nrow(wtr) < 2) stop("Need to use at least 2 different water temperature values to interpolate between")
 	  
 	  io = create_irr_day_cycle(lat,lon, dates=io[[1]], irr_mean = io[[2]], by='min')
-		
+	  
 		#I really hate that I have to do this, but I need to ensure it is UTC for the later approx stage
 		wtr[[1]] = as.POSIXct(format(wtr[[1]], '%Y-%m-%d'), tz='UTC')
 		
@@ -129,3 +129,12 @@ interp_hypso = function(hypso, dz=0.1, force_zero_area=TRUE){
 	
 }
 
+interp_hypso_to_match_temp_profiles <- function(wtr, hypso) {
+  
+  # Match hypso depths to water temperature profile depths
+  matched_depths <- get.offsets(wtr)
+  matched_areas <- approx(hypso$depths, hypso$areas, xout=matched_depths)$y
+  matched_hypso <- list(depths = matched_depths, areas = matched_areas)
+  
+  return(matched_hypso)
+}

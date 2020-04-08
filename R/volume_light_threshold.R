@@ -47,15 +47,9 @@
 #'@export
 area_light_threshold = function(kd, light_incident, irr_thresh=c(0,2000), hypso, area_type="benthic"){
 	
+  depth_area_rel <- calc_depth_area_rel(hypso, area_type)
+  
 	light_map = vol_light_map(kd, light_incident, irr_thresh, hypso$depths)
-	
-	if(tolower(area_type) == "surface"){
-		depth_area_rel = surface_areas(hypso$depths, hypso$areas)
-	}else if(tolower(area_type) == "benthic"){
-		depth_area_rel = benthic_areas(hypso$depths, hypso$areas)
-	}else{
-		stop("Unrecognized area_type, must be 'surface' or 'benthic'")
-	}
 	
 	light_map_collapsed = apply(light_map, 2, sum, na.rm=TRUE)
 	
@@ -82,10 +76,9 @@ area_light_threshold = function(kd, light_incident, irr_thresh=c(0,2000), hypso,
 #'@export
 area_temp_threshold = function(wtr, wtr_thresh=c(0,25), hypso, area_type="surface"){
 	
-  # Match hypso depths to water temperature profile depths
-  matched_depths = get.offsets(wtr)
-  matched_areas  = approx(hypso$depths, hypso$areas, xout=matched_depths)$y
-	
+  updated_hypso <- interp_hypso_to_match_temp_profiles(wtr, hypso)
+  depth_area_rel <- calc_depth_area_rel(updated_hypso, area_type)
+  
   wtr = drop.datetime(wtr)
 	
 	map = wtr >= wtr_thresh[1] & wtr <= wtr_thresh[2]
@@ -94,14 +87,6 @@ area_temp_threshold = function(wtr, wtr_thresh=c(0,25), hypso, area_type="surfac
 	
 	for( i in 1:(ncol(map)-1) ){
 		vol_map[,i] = map[,i] & map[,i+1]
-	}
-	
-	if(tolower(area_type) == "surface"){
-		depth_area_rel = surface_areas(matched_depths, matched_areas)
-	}else if(tolower(area_type) == "benthic"){
-		depth_area_rel = benthic_areas(matched_depths, matched_areas)
-	}else{
-		stop("Unrecognized area_type, must be 'surface' or 'benthic'")
 	}
 	
 	map_collapsed = apply(vol_map, 2, sum, na.rm=TRUE)
@@ -124,9 +109,8 @@ area_temp_threshold = function(wtr, wtr_thresh=c(0,25), hypso, area_type="surfac
 #'@export
 area_light_temp_threshold = function(wtr, kd, light_incident, irr_thresh=c(0,2000), wtr_thresh=c(0,25), hypso, area_type="surface"){
 	
-  # Match hypso depths to water temperature profile depths
-  matched_depths = get.offsets(wtr)
-  matched_areas  = approx(hypso$depths, hypso$areas, xout=matched_depths)$y
+  updated_hypso <- interp_hypso_to_match_temp_profiles(wtr, hypso)
+  depth_area_rel <- calc_depth_area_rel(updated_hypso, area_type)
   
 	wtr = drop.datetime(wtr)
 	
@@ -137,19 +121,11 @@ area_light_temp_threshold = function(wtr, kd, light_incident, irr_thresh=c(0,200
 		vol_map[,i] = map[,i] & map[,i+1]
 	}
 	
-	light_map = vol_light_map(kd, light_incident, irr_thresh, matched_depths)
+	light_map = vol_light_map(kd, light_incident, irr_thresh, updated_hypso$depths)
 	
 	##these should theoretically be the exact same size/shape
 	both_map = light_map & vol_map  #only where both apply
-	
-	if(tolower(area_type) == "surface"){
-		depth_area_rel = surface_areas(matched_depths, matched_areas)
-	}else if(tolower(area_type) == "benthic"){
-		depth_area_rel = benthic_areas(matched_depths, matched_areas)
-	}else{
-		stop("Unrecognized area_type, must be 'surface' or 'benthic'")
-	}
-	
+
 	map_collapsed = apply(both_map, 2, sum, na.rm=TRUE)
 	
 	average_area = sum(depth_area_rel * map_collapsed, na.rm=TRUE)
@@ -183,6 +159,20 @@ vol_light_map = function(kd, light_incident, thresholds, depths){
 	return(vol_light_map)
 }
 
+
+# Moves this calculation that is used multiple times
+#   into a shared function so that the code is only
+#   written one time.
+calc_depth_area_rel <- function(hypso, area_type) {
+  if(tolower(area_type) == "surface"){
+    depth_area_rel <- surface_areas(hypso$depths, hypso$areas)
+  }else if(tolower(area_type) == "benthic"){
+    depth_area_rel <- benthic_areas(hypso$depths, hypso$areas)
+  }else{
+    stop("Unrecognized area_type, must be 'surface' or 'benthic'")
+  }
+  return(depth_area_rel)
+}
 
 #Produces a vector of length n-1
 # of benthic areas between each depth
