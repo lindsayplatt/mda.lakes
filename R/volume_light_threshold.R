@@ -51,9 +51,7 @@ area_light_threshold = function(kd, light_incident, irr_thresh=c(0,2000), hypso,
   
 	light_map <- vol_light_map(kd, light_incident, irr_thresh, hypso$depths)
 
-	light_map_collapsed = apply(light_map, 2, sum, na.rm=TRUE)
-
-	average_area = sum(depth_area_rel * light_map_collapsed)
+	average_area <- calc_area_from_vol(light_map, depth_area_rel)
 	
 	return(average_area)
 }
@@ -81,9 +79,7 @@ area_temp_threshold = function(wtr, wtr_thresh=c(0,25), hypso, area_type="surfac
   
   wtr_map <- vol_temp_map(wtr, wtr_thresh)
 	
-	map_collapsed = apply(wtr_map, 2, sum, na.rm=TRUE)
-	
-	average_area = sum(depth_area_rel * map_collapsed, na.rm=TRUE)
+  average_area <- calc_area_from_vol(wtr_map, depth_area_rel)
 	
 	return(average_area)
 }
@@ -110,11 +106,18 @@ area_light_temp_threshold = function(wtr, kd, light_incident, irr_thresh=c(0,200
 	##these should theoretically be the exact same size/shape
 	both_map = light_map & wtr_map  #only where both apply
 
-	map_collapsed = apply(both_map, 2, sum, na.rm=TRUE)
-	
-	average_area = sum(depth_area_rel * map_collapsed, na.rm=TRUE)
+	average_area <- calc_area_from_vol(both_map, depth_area_rel)
 	
 	return(average_area)
+}
+
+
+# Using the T/F map for where either light, temp, or both
+#   are available, calculate the area that it equates to
+calc_area_from_vol <- function(vol_map, depth_area_rel) {
+  map_collapsed <- apply(vol_map, 2, sum, na.rm=TRUE)
+  average_area <- sum(depth_area_rel * map_collapsed, na.rm=TRUE)
+  return(average_area)
 }
 
 vol_light_map <- function(kd, light_incident, thresholds, depths){
