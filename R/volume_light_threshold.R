@@ -175,20 +175,17 @@ calc_depth_area_rel <- function(hypso, area_type) {
 
 #Produces a vector of length n-1
 # of benthic areas between each depth
-benthic_areas = function(depths, areas){
+benthic_areas <- function(depths, areas){
 	
-	top_depths  = areas[1:length(areas)-1]
-	benth_areas = rep(NA, length(top_depths))
-	
-	for(i in 1:length(areas)-1){
-		#geometry: area of a trapezoid with top and bottom circles of a given area
-		# and the height is based on the difference in radii of those circles
-		trap_length = sqrt(areas[i]*pi) + sqrt(areas[i+1]*pi)
-		trap_height = sqrt( (depths[i+1] - depths[i])^2 + (sqrt(areas[i]/pi) - sqrt(areas[i+1]/pi))^2 )
-		benth_areas[i] = trap_length * trap_height
-	}
-	
-	return(benth_areas)
+  areas_lead <- c(areas[-1], NA)
+  depths_lead <- c(depths[-1], NA)
+  
+  trap_length <- sqrt(areas*pi) + sqrt(areas_lead*pi)
+  trap_height <- sqrt( (depths_lead - depths)^2 + (sqrt(areas/pi) - sqrt(areas_lead/pi))^2 )
+  benth_areas <- (trap_length * trap_height)
+  benth_areas_rmna <- benth_areas[!is.na(benth_areas)]
+  
+  return(benth_areas_rmna)
 }
 
 #Produces a vector of length n-1
