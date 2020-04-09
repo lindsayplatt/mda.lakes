@@ -79,17 +79,9 @@ area_temp_threshold = function(wtr, wtr_thresh=c(0,25), hypso, area_type="surfac
   updated_hypso <- interp_hypso_to_match_temp_profiles(wtr, hypso)
   depth_area_rel <- calc_depth_area_rel(updated_hypso, area_type)
   
-  wtr = drop.datetime(wtr)
+  wtr_map <- vol_temp_map(wtr, wtr_thresh)
 	
-	map = wtr >= wtr_thresh[1] & wtr <= wtr_thresh[2]
-	
-	vol_map = map[,-1] #just needs to be 1 less column than light_map
-	
-	for( i in 1:(ncol(map)-1) ){
-		vol_map[,i] = map[,i] & map[,i+1]
-	}
-	
-	map_collapsed = apply(vol_map, 2, sum, na.rm=TRUE)
+	map_collapsed = apply(wtr_map, 2, sum, na.rm=TRUE)
 	
 	average_area = sum(depth_area_rel * map_collapsed, na.rm=TRUE)
 	
@@ -112,19 +104,11 @@ area_light_temp_threshold = function(wtr, kd, light_incident, irr_thresh=c(0,200
   updated_hypso <- interp_hypso_to_match_temp_profiles(wtr, hypso)
   depth_area_rel <- calc_depth_area_rel(updated_hypso, area_type)
   
-	wtr = drop.datetime(wtr)
-	
-	map = wtr >= wtr_thresh[1] & wtr <= wtr_thresh[2]
-	vol_map = map[,-1] #just needs to be 1 less column than light_map
-	
-	for( i in 1:(ncol(map)-1) ){
-		vol_map[,i] = map[,i] & map[,i+1]
-	}
-	
+  wtr_map <- vol_temp_map(wtr, wtr_thresh)
 	light_map <- vol_light_map(kd, light_incident, irr_thresh, updated_hypso$depths)
 	
 	##these should theoretically be the exact same size/shape
-	both_map = light_map & vol_map  #only where both apply
+	both_map = light_map & wtr_map  #only where both apply
 
 	map_collapsed = apply(both_map, 2, sum, na.rm=TRUE)
 	
@@ -132,7 +116,6 @@ area_light_temp_threshold = function(wtr, kd, light_incident, irr_thresh=c(0,200
 	
 	return(average_area)
 }
-
 
 vol_light_map <- function(kd, light_incident, thresholds, depths){
 	
@@ -150,6 +133,18 @@ vol_light_map <- function(kd, light_incident, thresholds, depths){
   vol_light_map <- light_map_shifted & light_map_to_compare # Compares each value to the value of the next column over
 	
 	return(vol_light_map)
+}
+
+vol_temp_map <- function(wtr, thresholds) {
+  
+  wtr <- drop.datetime(wtr)
+  
+  wtr_map <- wtr >= thresholds[1] & wtr <= thresholds[2]
+  wtr_map_shifted <- wtr_map[,-1] # Effectively "moves" values of light_map over 1 column
+  wtr_map_to_compare <- wtr_map[,-ncol(wtr_map)] # Removes last column
+  vol_wtr_map <- wtr_map_shifted & wtr_map_to_compare # Compares each value to the value of the next column over
+  
+  return(vol_wtr_map)
 }
 
 # Moves this calculation that is used multiple times
