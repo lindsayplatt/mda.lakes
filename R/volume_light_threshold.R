@@ -115,6 +115,8 @@ area_light_temp_threshold = function(wtr, kd, light_incident, irr_thresh=c(0,200
 #   calculating each vol map and then the areas.
 area_light_temp_threshold_shared <- function(wtr, kd, light_incident, irr_thresh=c(0,2000), wtr_thresh=c(0,25), hypso, area_type="surface") {
   
+  depth_area_rel_orig <- calc_depth_area_rel(hypso, area_type)
+  
   updated_hypso <- interp_hypso_to_match_temp_profiles(wtr, hypso)
   depth_area_rel <- calc_depth_area_rel(updated_hypso, area_type)
   
@@ -124,7 +126,7 @@ area_light_temp_threshold_shared <- function(wtr, kd, light_incident, irr_thresh
   wtr_map <- vol_temp_map(wtr, wtr_thresh)
   both_map <- light_map & wtr_map  #only where both apply
   
-  light_only_average_area <- calc_area_from_vol(light_only_map, depth_area_rel)
+  light_only_average_area <- calc_area_from_vol(light_only_map, depth_area_rel_orig)
   temp_only_average_area <- calc_area_from_vol(wtr_map, depth_area_rel)
   light_temp_average_area <- calc_area_from_vol(both_map, depth_area_rel)
   
