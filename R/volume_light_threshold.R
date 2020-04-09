@@ -49,7 +49,7 @@ area_light_threshold = function(kd, light_incident, irr_thresh=c(0,2000), hypso,
 	
   depth_area_rel <- calc_depth_area_rel(hypso, area_type)
   
-	light_map = vol_light_map(kd, light_incident, irr_thresh, hypso$depths)
+	light_map <- vol_light_map(kd, light_incident, irr_thresh, hypso$depths)
 
 	light_map_collapsed = apply(light_map, 2, sum, na.rm=TRUE)
 
@@ -121,7 +121,7 @@ area_light_temp_threshold = function(wtr, kd, light_incident, irr_thresh=c(0,200
 		vol_map[,i] = map[,i] & map[,i+1]
 	}
 	
-	light_map = vol_light_map(kd, light_incident, irr_thresh, updated_hypso$depths)
+	light_map <- vol_light_map(kd, light_incident, irr_thresh, updated_hypso$depths)
 	
 	##these should theoretically be the exact same size/shape
 	both_map = light_map & vol_map  #only where both apply
@@ -134,27 +134,20 @@ area_light_temp_threshold = function(wtr, kd, light_incident, irr_thresh=c(0,200
 }
 
 
-vol_light_map = function(kd, light_incident, thresholds, depths){
+vol_light_map <- function(kd, light_incident, thresholds, depths){
 	
-	light_profile = data.frame(Io=light_incident)
+  irr_mat <- matrix(light_incident, nrow = length(light_incident), ncol = 1)
+  depths_mat <- matrix(depths, nrow = 1, ncol = length(depths))
 	
-	for(i in 1:length(depths)){
-		colname = paste0('irr_', depths[i])
-		light_profile[,colname] = light_profile$Io * exp(-1* kd * depths[i])
-	}
-	
-	#drop incident light
-	light_profile = light_profile[,-1]
-	
+  light_profile <- irr_mat %*% exp(-1* kd * depths_mat) # multiple matrices together
+  
+  light_map = light_profile >= thresholds[1] & light_profile <= thresholds[2]
+  
 	#Now we need to turn it to a volumetric light map, where TRUE means 
 	# that layer (not just slice) is within the thresholds
-	light_map = light_profile >= thresholds[1] & light_profile <= thresholds[2]
-	
-	vol_light_map = light_map[,-1] #just needs to be 1 less column than light_map
-	
-	for( i in 1:(ncol(light_map)-1) ){
-		vol_light_map[,i] = light_map[,i] & light_map[,i+1]
-	}
+  light_map_shifted <- light_map[,-1] # Effectively "moves" values of light_map over 1 column
+  light_map_to_compare <- light_map[,-ncol(light_map)] # Removes last column
+  vol_light_map <- light_map_shifted & light_map_to_compare # Compares each value to the value of the next column over
 	
 	return(vol_light_map)
 }
