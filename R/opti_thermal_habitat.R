@@ -34,7 +34,7 @@ opti_thermal_habitat = function(opt_wtr, io, kd, lat, lon, hypso, irr_thresh=c(0
 	  if(nrow(wtr) < 2) stop("Need to use at least 2 different water temperature values to interpolate between")
 
 	  io <- create_irr_day_cycle(lat,lon, dates=io[[1]], irr_mean = io[[2]], by='min')
-	  wtr <- match_wtr_to_irr_day_cycle(io, wtr)
+	  wtr <- match_wtr_to_irr_day_cycle(dates_to_match = io[[1]], wtr)
 		
 		#note, the division by 24, want it in m^2*days (not hours)
 		# light_alone = area_light_threshold(kd, io[,2], irr_thresh, hypso, area_type)/24
@@ -129,7 +129,9 @@ interp_hypso_to_match_temp_profiles <- function(wtr, hypso) {
 
 # Need the water temp to be interpolated throughout the day
 #   if we are doing that for irradiance
-match_wtr_to_irr_day_cycle <- function(io, wtr) {
+# Assumes that wtr[[1]] is datetime column and everything else
+#   is a temperature profile. 
+match_wtr_to_irr_day_cycle <- function(dates_to_match, wtr) {
   
   #I really hate that I have to do this, but I need to ensure it is UTC for the later approx stage
   wtr[[1]] = as.POSIXct(format(wtr[[1]], '%Y-%m-%d'), tz='UTC')
@@ -141,9 +143,9 @@ match_wtr_to_irr_day_cycle <- function(io, wtr) {
     }else{
       approx(old_dates, wtr_col, xout=new_dates)$y
     }
-  }, old_dates = wtr[[1]], new_dates = io[[1]])
+  }, old_dates = wtr[[1]], new_dates = dates_to_match)
 
-  new_wtr <- data.frame(datetime = io[[1]], new_wtr_cols)
+  new_wtr <- data.frame(datetime = dates_to_match, new_wtr_cols)
   
   return(new_wtr)
 }
