@@ -126,9 +126,9 @@ area_light_temp_threshold_shared <- function(wtr, kd, light_incident, irr_thresh
   temp_only_average_area <- calc_area_from_vol(wtr_map, depth_area_rel)
   light_temp_average_area <- calc_area_from_vol(both_map, depth_area_rel)
   
-  return(list(light_alone = light_only_average_area, 
-              temp_alone = temp_only_average_area, 
-              light_temp = light_temp_average_area))
+  return(data.frame(opti_hab = light_only_average_area, 
+                    therm_hab = temp_only_average_area, 
+                    opti_therm_hab = light_temp_average_area))
 }
 
 # Using the T/F map for where either light, temp, or both
