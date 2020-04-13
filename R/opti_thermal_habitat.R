@@ -41,10 +41,6 @@ opti_thermal_habitat = function(opt_wtr, io, kd, lat, lon, hypso, irr_thresh=c(0
 		# temp_alone  = area_temp_threshold(wtr, wtr_thresh, hypso, area_type)/24
 		# light_temp  = area_light_temp_threshold(wtr, kd, io[,2], irr_thresh, wtr_thresh, hypso, area_type)/24
 	  habitat_shared <- area_light_temp_threshold_shared(wtr, kd, io[,2], irr_thresh, wtr_thresh, hypso, area_type)
-	  habitat_shared$opti_hab <- habitat_shared$opti_hab/24 # SHOULDN'T THIS BE 1440?
-	  habitat_shared$therm_hab <- habitat_shared$therm_hab/24 # SHOULDN'T THIS BE 1440?
-	  habitat_shared$opti_therm_hab <- habitat_shared$opti_therm_hab/24 # SHOULDN'T THIS BE 1440?
-	  
 	}else{
 		light_alone = area_light_threshold(kd, io[,2], irr_thresh, hypso, area_type)
 		temp_alone  = area_temp_threshold(wtr, wtr_thresh, hypso, area_type)
