@@ -119,8 +119,11 @@ area_light_temp_threshold_shared <- function(wtr, kd, light_incident, irr_thresh
   depth_area_rel <- calc_depth_area_rel(updated_hypso, area_type)
   
   light_map <- vol_light_map(kd, light_incident, irr_thresh, updated_hypso$depths)
-  wtr_map <- vol_temp_map(wtr, wtr_thresh)
-  both_map <- light_map & wtr_map  #only where both apply
+  wtr_map <- vol_temp_map(wtr, wtr_thresh) # wtr is just daily here; upsampled below to be able to compare to light
+  
+  # Upsample wtr (repeat values) to match dimensions of light_map, then compare light & temp
+  wtr_upsampled_map <- matrix(wtr_map, ncol = ncol(wtr_map), nrow = length(light_incident), byrow=TRUE)
+  both_map <- light_map & wtr_upsampled_map  #only where both apply
   
   light_only_average_area <- calc_area_from_vol(light_map, depth_area_rel)
   temp_only_average_area <- calc_area_from_vol(wtr_map, depth_area_rel)
@@ -161,9 +164,10 @@ vol_temp_map <- function(wtr, thresholds) {
   
   wtr <- drop.datetime(wtr)
   
+  # Using `drop=FALSE` to maintain matrix when there is only 1 row (otherwise becomes vector)
   wtr_map <- wtr >= thresholds[1] & wtr <= thresholds[2]
-  wtr_map_shifted <- wtr_map[,-1] # Effectively "moves" values of light_map over 1 column
-  wtr_map_to_compare <- wtr_map[,-ncol(wtr_map)] # Removes last column
+  wtr_map_shifted <- wtr_map[,-1, drop=FALSE] # Effectively "moves" values of wtr_map over 1 column
+  wtr_map_to_compare <- wtr_map[,-ncol(wtr_map), drop=FALSE] # Removes last column
   vol_wtr_map <- wtr_map_shifted & wtr_map_to_compare # Compares each value to the value of the next column over
   
   return(vol_wtr_map)

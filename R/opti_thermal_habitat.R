@@ -30,17 +30,8 @@ opti_thermal_habitat = function(opt_wtr, io, kd, lat, lon, hypso, irr_thresh=c(0
 	
 	#Now, if we are going to interp this, we need to interp io and wtr to at least hourly or so
 	if(interp_hour){
-	  
-	  if(nrow(wtr) < 2) stop("Need to use at least 2 different water temperature values to interpolate between")
-
 	  io <- create_irr_day_cycle(lat,lon, dates=io[[1]], irr_mean = io[[2]], by='min')
-	  wtr <- match_wtr_to_irr_day_cycle(dates_to_match = io[[1]], wtr)
-		
-		#note, the division by 24, want it in m^2*days (not hours)
-		# light_alone = area_light_threshold(kd, io[,2], irr_thresh, hypso, area_type)/24
-		# temp_alone  = area_temp_threshold(wtr, wtr_thresh, hypso, area_type)/24
-		# light_temp  = area_light_temp_threshold(wtr, kd, io[,2], irr_thresh, wtr_thresh, hypso, area_type)/24
-	  habitat_shared <- area_light_temp_threshold_shared(wtr, kd, io[,2], irr_thresh, wtr_thresh, hypso, area_type)
+	  habitat_shared <- area_light_temp_threshold_shared(wtr, kd, io[[2]], irr_thresh, wtr_thresh, hypso, area_type)
 	}else{
 		light_alone = area_light_threshold(kd, io[,2], irr_thresh, hypso, area_type)
 		temp_alone  = area_temp_threshold(wtr, wtr_thresh, hypso, area_type)
@@ -122,27 +113,4 @@ interp_hypso_to_match_temp_profiles <- function(wtr, hypso) {
   matched_hypso <- list(depths = matched_depths, areas = matched_areas)
   
   return(matched_hypso)
-}
-
-# Need the water temp to be interpolated throughout the day
-#   if we are doing that for irradiance
-# Assumes that wtr[[1]] is datetime column and everything else
-#   is a temperature profile. 
-match_wtr_to_irr_day_cycle <- function(dates_to_match, wtr) {
-  
-  #I really hate that I have to do this, but I need to ensure it is UTC for the later approx stage
-  wtr[[1]] = as.POSIXct(format(wtr[[1]], '%Y-%m-%d'), tz='UTC')
-  
-  new_wtr_cols <- apply(wtr[,-1], 2, function(wtr_col, old_dates, new_dates) {
-    #There may not be enough non NA values for us to run approx, check
-    if(sum(!is.na(wtr_col)) < 2){
-      rep(NA, length(new_dates))
-    }else{
-      approx(old_dates, wtr_col, xout=new_dates)$y
-    }
-  }, old_dates = wtr[[1]], new_dates = dates_to_match)
-
-  new_wtr <- data.frame(datetime = dates_to_match, new_wtr_cols)
-  
-  return(new_wtr)
 }
