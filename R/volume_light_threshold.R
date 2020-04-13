@@ -134,8 +134,8 @@ area_light_temp_threshold_shared <- function(wtr, kd, light_incident, irr_thresh
 # Using the T/F map for where either light, temp, or both
 #   are available, calculate the area that it equates to
 calc_area_from_vol <- function(vol_map, depth_area_rel) {
-  map_collapsed <- apply(vol_map, 2, sum, na.rm=TRUE)
   average_area <- sum(depth_area_rel * map_collapsed, na.rm=TRUE)
+  map_collapsed <- colSums(vol_map, na.rm=TRUE) # Sum number of timesteps that the condition was TRUE
   return(average_area)
 }
 
