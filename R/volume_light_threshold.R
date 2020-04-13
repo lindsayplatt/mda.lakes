@@ -195,6 +195,10 @@ benthic_areas <- function(depths, areas){
   benth_areas <- (trap_length * trap_height)
   benth_areas_rmna <- benth_areas[!is.na(benth_areas)]
   
+  # add in area for the bottom of the lake (if comes to point, then adds 0 and doesn't change)
+  last_cone <- length(benth_areas_rmna)
+  benth_areas_rmna[last_cone] <- benth_areas_rmna[last_cone] + tail(areas, 1) 
+  
   return(benth_areas_rmna)
 }
 
