@@ -135,7 +135,7 @@ area_light_temp_threshold_shared <- function(wtr, kd, light_incident, irr_thresh
 #   are available, calculate the area that it equates to
 calc_area_from_vol <- function(vol_map, depth_area_rel) {
   map_collapsed <- colSums(vol_map, na.rm=TRUE) # Sum number of timesteps that the condition was TRUE
-  average_area <- sum(depth_area_rel * map_collapsed, na.rm=TRUE)/24
+  average_area <- sum(depth_area_rel * map_collapsed, na.rm=TRUE)/nrow(vol_map) # Divide by number of timesteps to get average area per day
   return(average_area)
 }
 
