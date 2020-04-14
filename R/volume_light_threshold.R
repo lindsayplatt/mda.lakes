@@ -160,9 +160,8 @@ vol_light_map <- function(kd, light_incident, thresholds, depths){
 	return(vol_light_map)
 }
 
+# wtr is only the columns with temp profiles, no datetimes
 vol_temp_map <- function(wtr, thresholds) {
-  
-  wtr <- drop.datetime(wtr)
   
   # Using `drop=FALSE` to maintain matrix when there is only 1 row (otherwise becomes vector)
   wtr_map <- wtr >= thresholds[1] & wtr <= thresholds[2]
